@@ -11,8 +11,8 @@ import collections
 import logging
 import sys
 
-COMPLEMENT = { 'A': 'T', 'C': 'G', 'T': 'A', 'G': 'C' }
-PAMS = set(['GG', 'AGAA', 'GATT', 'AAAA'])
+COMPLEMENT = { 'A': 'T', 'C': 'G', 'T': 'A', 'G': 'C', 'N': 'N' }
+PAMS = set(['NGG', 'NNAGAA', 'NNNNGATT', 'NAAAAN'])
 
 def reverse_complement(s):
   return ''.join(reversed([COMPLEMENT[x] for x in s]))
@@ -21,7 +21,13 @@ def test_current(fasta, idx, subsequence):
   '''
     tests the current location (idx) of the fasta sequence for the specified subsequence or the reverse complement of the subsequence
   '''
-  return idx < len(fasta) - len(subsequence) and (fasta[idx:idx+len(subsequence)].upper() == subsequence or fasta[idx:idx+len(subsequence)].upper() == reverse_complement(subsequence))
+  if idx < len(fasta) - len(subsequence):
+    for p in range(len(subsequence)):
+      if subsequence[p].upper() != 'N' and subsequence[p].upper() != fasta[idx + p].upper():
+        return False
+    return True
+  return False
+  #return idx < len(fasta) - len(subsequence) and (fasta[idx:idx+len(subsequence)].upper() == subsequence or fasta[idx:idx+len(subsequence)].upper() == reverse_complement(subsequence))
 
 def find_pams():
   logging.info('reading fasta file...')
@@ -38,7 +44,7 @@ def find_pams():
   for idx in range(len(fasta)):
     # check for each pam
     for pam in PAMS:
-      if test_current(fasta, idx, pam):
+      if test_current(fasta, idx, pam) or test_current(fasta, idx, reverse_complement(pam)):
         counts[pam] += 1
 
     if idx % 1000000 == 0:

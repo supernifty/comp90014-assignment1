@@ -23,7 +23,7 @@ def find_crispr(min_repeat=23, min_spacer=20, max_spacer=50):
     fasta += line.strip()
 
   # build the position of all kmers within the fasta sequence
-  logging.info("building kmers...")
+  logging.info("building kmers of length %i...", min_repeat)
   kmers = collections.defaultdict(list)
   for idx in range(0, len(fasta) - min_repeat + 1):
     kmer = fasta[idx:idx+min_repeat]
@@ -32,15 +32,16 @@ def find_crispr(min_repeat=23, min_spacer=20, max_spacer=50):
   # find repeated kmers that are within some range
   logging.info("analysing...")
   sys.stdout.write('potential crispr sites:\n')
-  sys.stdout.write('#pos,pre,spacer,post\n')
+  sys.stdout.write('#pos,pre,spacer,post,kmerlen,spacerlen\n')
   for kmer in kmers: # every kmer
     for idx in range(len(kmers[kmer])-1): # every position for each kmer
       next_repeat_dist = kmers[kmer][idx+1] - kmers[kmer][idx]
       if min_spacer + min_repeat < next_repeat_dist < max_spacer + min_repeat:
         start_first_repeat = kmers[kmer][idx]
         start_second_repeat = kmers[kmer][idx + 1]
+        spacer = fasta[start_first_repeat + min_repeat:start_second_repeat]
         # potential crispr site
-        sys.stdout.write('{},{},{},{}\n'.format(start_first_repeat, kmer, fasta[start_first_repeat + min_repeat:start_second_repeat], fasta[start_second_repeat:start_second_repeat + min_repeat]))
+        sys.stdout.write('{},{},{},{},{},{}\n'.format(start_first_repeat, kmer, spacer, fasta[start_second_repeat:start_second_repeat + min_repeat], len(kmer), len(spacer)))
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='Find sequence')
